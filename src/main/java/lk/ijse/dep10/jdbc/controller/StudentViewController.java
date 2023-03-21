@@ -1,5 +1,6 @@
 package lk.ijse.dep10.jdbc.controller;
 
+import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -24,6 +25,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.sql.*;
+import java.time.LocalDate;
 
 public class StudentViewController {
     @FXML
@@ -61,22 +63,63 @@ public class StudentViewController {
         tblStudents.getColumns().get(0).setCellValueFactory(new PropertyValueFactory<>("picture"));
 
         tblStudents.getSelectionModel().selectedItemProperty().addListener((ov,prev,current)->{
-            btnDelete.setDisable(false);
-            txtStudentId.setText(current.getId());
-            txtStudentName.setText(current.getName());
-            if (current.getPicture() != null) {
-                try {
-                    InputStream is = current.getPicture().getBinaryStream();
-                    Image image = new Image(is);
+            if (current != null) {
+
+                btnDelete.setDisable(false);
+                txtStudentId.setText(current.getId());
+                txtStudentName.setText(current.getName());
+                if (current.getPicture() != null) {
+                    try {
+                        InputStream is = current.getPicture().getBinaryStream();
+                        Image image = new Image(is);
+                        imgPicture.setImage(image);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    Image image = new Image("/image/empty-photo.png");
                     imgPicture.setImage(image);
-                } catch (SQLException e) {
-                    e.printStackTrace();
                 }
-            } else {
-                Image image = new Image("/image/empty-photo.png");
-                imgPicture.setImage(image);
             }
 
+        });
+
+        txtSearch.textProperty().addListener((ov,prev,current)->{
+            Connection connection = DBConnection.getInstance().getConnection();
+            try {
+                Statement stm = connection.createStatement();
+
+                String sql = "SELECT * FROM Student WHERE Student.name LIKE '%1$s' OR Student.id LIKE '%1$s'";
+                PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM Picture WHERE Picture.student_id = ?");
+                sql = String.format(sql,"%"+current+"%");
+                ResultSet rst = stm.executeQuery(sql);
+
+                ObservableList<Student> studentList = tblStudents.getItems();
+                studentList.clear();
+                while (rst.next()){
+                    String id = rst.getString("id");
+                    String name = rst.getString("name");
+
+                    Image image = new Image("/image/empty-photo.png");
+                    BufferedImage bi = SwingFXUtils.fromFXImage(image, null);
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ImageIO.write(bi,"png",bos);
+                    byte[] bytes = bos.toByteArray();
+                    Blob picture = new SerialBlob(bytes);
+
+                    preparedStatement.setString(1,id);
+                    ResultSet rstPicture = preparedStatement.executeQuery();
+
+                    if (rstPicture.next()) {
+                        picture = rstPicture.getBlob("picture");
+                    }
+                    studentList.add(new Student(id,name,picture));
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         });
 
         loadStudents();
@@ -180,8 +223,9 @@ public class StudentViewController {
 
         txtStudentId.setText(newStudentId);
         txtStudentName.clear();
-        btnClear.fire();
-//        tblStudents.getSelectionModel().clearSelection();
+//        btnClear.fire();
+        imgPicture.setImage(new Image("/image/empty-photo.png"));
+        tblStudents.getSelectionModel().clearSelection();
 
 
     }

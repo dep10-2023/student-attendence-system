@@ -19,6 +19,8 @@ import javax.sql.rowset.serial.SerialBlob;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.sql.*;
@@ -58,7 +60,27 @@ public class StudentViewController {
         tblStudents.getColumns().get(2).setCellValueFactory(new PropertyValueFactory<>("name"));
         tblStudents.getColumns().get(0).setCellValueFactory(new PropertyValueFactory<>("picture"));
 
+        tblStudents.getSelectionModel().selectedItemProperty().addListener((ov,prev,current)->{
+            btnDelete.setDisable(false);
+            txtStudentId.setText(current.getId());
+            txtStudentName.setText(current.getName());
+            if (current.getPicture() != null) {
+                try {
+                    InputStream is = current.getPicture().getBinaryStream();
+                    Image image = new Image(is);
+                    imgPicture.setImage(image);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                Image image = new Image("/image/empty-photo.png");
+                imgPicture.setImage(image);
+            }
+
+        });
+
         loadStudents();
+        btnNewStudent.fire();
     }
 
     private void loadStudents() {
@@ -107,8 +129,7 @@ public class StudentViewController {
 
     @FXML
     void btnClearOnAction(ActionEvent event) {
-        Image image = new Image("/image/empty-photo.png");
-        imgPicture.setImage(image);
+        imgPicture.setImage(new Image("/image/empty-photo.png"));
         btnClear.setDisable(true);
 
 
@@ -116,23 +137,106 @@ public class StudentViewController {
 
     @FXML
     void btnDeleteOnAction(ActionEvent event) {
+        Student selectedStudent = tblStudents.getSelectionModel().getSelectedItem();
+        Connection connection = DBConnection.getInstance().getConnection();
+        try {
+            connection.setAutoCommit(false);
+            PreparedStatement statement1 = connection.prepareStatement("DELETE FROM Picture WHERE student_id = ?");
+            statement1.setString(1, selectedStudent.getId());
+            PreparedStatement statement2 = connection.prepareStatement("DELETE FROM Student WHERE id = ?");
+            statement2.setString(1, selectedStudent.getId());
+
+            statement1.executeUpdate();
+            statement2.executeUpdate();
+
+            tblStudents.getItems().remove(tblStudents.getSelectionModel().getSelectedIndex());
+            btnNewStudent.fire();
+            connection.commit();
+
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
 
     }
 
     @FXML
     void btnNewStudentOnAction(ActionEvent event) {
-        String lastStudentId = (tblStudents.getItems().get(tblStudents.getItems().size()-1).getId().substring(8));
-        String newStudentId = String.format("Dep10/S%03d",Integer.parseInt(lastStudentId)+1);
+        System.out.println(tblStudents.getItems());
+        String newStudentId = "Dep10/S001";
+        if (tblStudents.getItems() != null) {
+            String lastStudentId = (tblStudents.getItems().get(tblStudents.getItems().size() - 1).getId().substring(8));
+            newStudentId = String.format("Dep10/S%03d", Integer.parseInt(lastStudentId) + 1);
+        }
 
         txtStudentId.setText(newStudentId);
         txtStudentName.clear();
         btnClear.fire();
+//        tblStudents.getSelectionModel().clearSelection();
+
 
     }
 
     @FXML
     void btnSaveOnAction(ActionEvent event) {
+        if (!isDataValid()) return;
+        System.out.println("DataValid");
 
+        Student newStudent = new Student(txtStudentId.getText(), txtStudentName.getText(), null);
+        tblStudents.getItems().add(newStudent);
+        Connection connection = DBConnection.getInstance().getConnection();
+        try {
+            connection.setAutoCommit(false);
+            PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO Student(id, name) VALUES (?,?)");
+            PreparedStatement preparedStatementPicture = connection.prepareStatement("INSERT INTO Picture(student_id, picture) VALUES (?,?)");
+
+            preparedStatement.setString(1,txtStudentId.getText());
+            preparedStatement.setString(2,txtStudentName.getText());
+            preparedStatement.executeUpdate();
+
+            preparedStatementPicture.setString(1,txtStudentId.getText());
+
+            Image image = imgPicture.getImage();
+            BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ImageIO.write(bufferedImage, "png", bos);
+            byte[] bytes = bos.toByteArray();
+            Blob picture = new SerialBlob(bytes);
+            preparedStatementPicture.setBlob(2,picture);
+            preparedStatementPicture.executeUpdate();
+            newStudent.setPicture(picture);
+            btnNewStudent.fire();
+            connection.commit();
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                e.printStackTrace();
+            }
+            e.printStackTrace();
+        } catch (IOException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                e.printStackTrace();
+            }
+            throw new RuntimeException(e);
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
 
 
     }

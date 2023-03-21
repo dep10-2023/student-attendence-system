@@ -6,6 +6,7 @@
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.Pane?>
@@ -22,7 +23,7 @@
       </Button>
       <VBox layoutX="10.0" layoutY="76.0" spacing="10.0">
          <children>
-            <Label fx:id="lblStudentId" alignment="CENTER" contentDisplay="CENTER" prefHeight="18.0" prefWidth="435.0" text="STUDENT ID">
+            <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="18.0" prefWidth="435.0" text="STUDENT ID">
                <font>
                   <Font size="14.0" />
                </font>
@@ -32,7 +33,7 @@
                   <Font size="14.0" />
                </font>
             </TextField>
-            <Label fx:id="lblStudentName" alignment="CENTER" contentDisplay="CENTER" prefHeight="18.0" prefWidth="435.0" text="STUDENT NAME">
+            <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="18.0" prefWidth="435.0" text="STUDENT NAME">
                <font>
                   <Font size="14.0" />
                </font>
@@ -52,12 +53,16 @@
             <Font size="14.0" />
          </font>
       </TextField>
-      <Pane layoutX="10.0" layoutY="215.0" style="-fx-border-color: lightgrey;">
+      <Pane layoutX="63.0" layoutY="216.0" style="-fx-border-color: lightgrey;">
          <children>
-            <ImageView fx:id="imgPicture" fitHeight="150.0" fitWidth="200.0" layoutX="3.0" layoutY="3.0" pickOnBounds="true" preserveRatio="true" />
+            <ImageView fx:id="imgPicture" fitHeight="150.0" fitWidth="200.0" layoutX="3.0" layoutY="3.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../image/empty-photo.png" />
+               </image>
+            </ImageView>
          </children>
       </Pane>
-      <Button fx:id="btnClear" layoutX="238.0" layoutY="293.0" mnemonicParsing="false" onAction="#btnClearOnAction" prefWidth="100.0" text="CLEAR">
+      <Button fx:id="btnClear" disable="true" layoutX="238.0" layoutY="293.0" mnemonicParsing="false" onAction="#btnClearOnAction" prefWidth="100.0" text="CLEAR">
          <font>
             <Font size="14.0" />
          </font>
@@ -67,12 +72,12 @@
             <Font size="14.0" />
          </font>
       </Button>
-      <Button fx:id="btnDelete" layoutX="188.0" layoutY="387.0" mnemonicParsing="false" onAction="#btnDeleteOnAction" prefWidth="100.0" text="DELETE">
+      <Button fx:id="btnDelete" disable="true" layoutX="188.0" layoutY="387.0" mnemonicParsing="false" onAction="#btnDeleteOnAction" prefWidth="100.0" text="DELETE">
          <font>
             <Font size="14.0" />
          </font>
       </Button>
-      <Button fx:id="btnSave" layoutX="63.0" layoutY="387.0" mnemonicParsing="false" onAction="#btnSaveOnAction" prefWidth="100.0" text="SAVE">
+      <Button fx:id="btnSave" defaultButton="true" layoutX="63.0" layoutY="387.0" mnemonicParsing="false" onAction="#btnSaveOnAction" prefWidth="100.0" text="SAVE">
          <font>
             <Font size="14.0" />
          </font>

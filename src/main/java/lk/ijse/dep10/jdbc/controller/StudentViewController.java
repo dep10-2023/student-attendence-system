@@ -10,7 +10,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.ImageView;
 
 public class StudentViewController {
-
+//        tblStudents.getColumns().get(0).setCellValueFactory(new PropertyValueFactory<>(""));
     @FXML
     private Button btnBrowse;
 

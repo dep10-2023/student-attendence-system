@@ -1,6 +1,8 @@
 package lk.ijse.dep10.jdbc;
 
 import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.stage.Stage;
 import lk.ijse.dep10.jdbc.db.DBConnection;
 
@@ -32,8 +34,11 @@ public class AppInitializer extends Application {
     }
 
     @Override
-    public void start(Stage primaryStage) {
+    public void start(Stage primaryStage) throws IOException {
         generateSchemaIfNotExist();
+
+        primaryStage.setScene(new Scene(new FXMLLoader(getClass().getResource("/view/StudentView.fxml")).load()));
+        primaryStage.show();
 
     }
     private void generateSchemaIfNotExist() {

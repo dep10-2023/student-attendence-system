@@ -39,6 +39,7 @@ public class Student implements Serializable {
     public ImageView getPicture() {
         picture.setFitWidth(100);
         picture.setFitHeight(100);
+        picture.setPreserveRatio(true);
         return picture;
     }
 

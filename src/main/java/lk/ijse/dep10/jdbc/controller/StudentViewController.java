@@ -144,6 +144,8 @@ public class StudentViewController {
                 if (rstPicture.next()) {
                     Blob pictureBlob = rstPicture.getBlob("picture");
                     picture = new Image(pictureBlob.getBinaryStream());
+                } else {
+                    picture = new Image("/image/empty-photo.png");
                 }
                 Student student = new Student(id, name, new ImageView(picture));
                 tblStudents.getItems().add(student);
@@ -199,11 +201,11 @@ public class StudentViewController {
             btnNewStudent.fire();
             connection.commit();
 
-        } catch (SQLException e) {
+        } catch (Throwable e) {
             try {
                 connection.rollback();
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex);
+            } catch (Throwable ex) {
+                ex.printStackTrace();
             }
         } finally {
             try {
@@ -250,16 +252,25 @@ public class StudentViewController {
             preparedStatement.setString(2,txtStudentName.getText());
             preparedStatement.executeUpdate();
 
-            preparedStatementPicture.setString(1,txtStudentId.getText());
-
             Image image = imgPicture.getImage();
+
+            BufferedImage bi = SwingFXUtils.fromFXImage(image, null);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ImageIO.write(bi,"png",bos);
+            byte[] bytes = bos.toByteArray();
+            Blob pictureBlob = new SerialBlob(bytes);
+            preparedStatementPicture.setString(1,txtStudentId.getText());
+            preparedStatementPicture.setBlob(2,pictureBlob);
+
+            preparedStatementPicture.executeUpdate();
+
+
+
 //            BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
 //            ByteArrayOutputStream bos = new ByteArrayOutputStream();
 //            ImageIO.write(bufferedImage, "png", bos);
 //            byte[] bytes = bos.toByteArray();
 //            Blob picture = new SerialBlob(bytes);
-//            preparedStatementPicture.setBlob(2,picture);
-//            preparedStatementPicture.executeUpdate();
             newStudent.setPicture(new ImageView(image));
             btnNewStudent.fire();
             connection.commit();
@@ -270,6 +281,8 @@ public class StudentViewController {
                 e.printStackTrace();
             }
             e.printStackTrace();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         } finally {
             try {
                 connection.setAutoCommit(true);
